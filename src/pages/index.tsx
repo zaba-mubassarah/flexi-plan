@@ -1,44 +1,8 @@
 "use client"
-import { useState } from "react"
-import bubbleMapData from '../data/bubble-map.json'
-import eligibilityMapData from '../data/eligibility-map.json'
-import selectedBubblesData from '../data/selected-bubbles.json'
-
-interface BubbleMapType {
-  voice: number[]
-  sms: number[]
-  bioscope: number[]
-  fourg: number[]
-  longevity: number[]
-  mca: number[]
-  data: number[]
-}
-
-interface SelectedBubblesType {
-  longevity: number
-  voice: number
-  data: number
-  fourg: number
-  bioscope: number
-  sms: number
-  mca: number
-}
-
-interface EligibilityMapType {
-  [key: string]: {
-    data: number[]
-    fourg: number[]
-    bioscope: number[]
-    voice: number[]
-    sms: number[]
-  }
-}
-
 export default function Flexiplan() {
   const [bubbleMap] = useState<BubbleMapType>(bubbleMapData)
   const [selected, setSelected] = useState<SelectedBubblesType>(selectedBubblesData)
   const [eligibilityMap] = useState<EligibilityMapType>(eligibilityMapData)
-  const [missedCallAlert, setMissedCallAlert] = useState(false)
 
   const formatValue = (value: number, type: string) => {
     if (["data", "fourg", "bioscope"].includes(type)) {
@@ -105,8 +69,8 @@ export default function Flexiplan() {
               key={value}
               onClick={() => handleSelect(type, value)}
               className={`h-12 w-12 rounded-full flex items-center justify-center text-sm transition-colors ${selected[type] === value
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-black hover:border-green-600 border border-gray-300"
+                ? "bg-green-600 text-white"
+                : "bg-gray-100 text-black hover:border-green-600 border border-gray-300"
                 }`}
             >
               {value === 0 ? "0" : value >= 1024 ? `${value / 1024}` : value}
@@ -137,22 +101,6 @@ export default function Flexiplan() {
               {renderBubbles("bioscope", "Bioscope", "Only used to watch Bioscope")}
               {renderBubbles("sms", "SMS")}
             </div>
-            {/* Missed Call Alert Toggle */}
-            <div className="mt-8 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-semibold text-black">Missed Call Alert</span>
-                <button
-                  onClick={() => setMissedCallAlert((prev) => !prev)}
-                  className={`w-12 h-6 rounded-full flex items-center ${missedCallAlert ? "bg-green-600" : "bg-gray-300"
-                    }`}
-                >
-                  <div
-                    className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${missedCallAlert ? "translate-x-6" : "translate-x-0"
-                      }`}
-                  ></div>
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Right Section */}
@@ -160,18 +108,11 @@ export default function Flexiplan() {
             <h3 className="font-semibold text-lg mb-4 text-black">Your Selection:</h3>
             <ul className="space-y-4">
               {Object.keys(selected).map((key) => (
-                <li
-                  key={key}
-                  className="flex justify-between text-black border-b pb-2"
-                >
+                <li key={key} className="flex justify-between text-black border-b pb-2">
                   <span className="capitalize">{key}:</span>
                   <span className="text-green-600">{formatValue(selected[key as keyof SelectedBubblesType], key)}</span>
                 </li>
               ))}
-              <li className="flex justify-between text-black border-b pb-2">
-                <span>Missed Call Alert:</span>
-                <span className="text-green-600">{missedCallAlert ? "On" : "Off"}</span>
-              </li>
             </ul>
           </div>
         </div>
