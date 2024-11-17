@@ -1,97 +1,115 @@
-"use client"
-import { useState } from "react"
-import bubbleMapData from '../data/bubble-map.json'
-import eligibilityMapData from '../data/eligibility-map.json'
-import selectedBubblesData from '../data/selected-bubbles.json'
+"use client";
+import { useState } from "react";
+import bubbleMapData from "../data/bubble-map.json";
+import eligibilityMapData from "../data/eligibility-map.json";
+import selectedBubblesData from "../data/selected-bubbles.json";
 
 interface BubbleMapType {
-  voice: number[]
-  sms: number[]
-  bioscope: number[]
-  fourg: number[]
-  longevity: number[]
-  data: number[]
+  voice: number[];
+  sms: number[];
+  bioscope: number[];
+  fourg: number[];
+  longevity: number[];
+  mca: number[];
+  data: number[];
 }
 
 interface SelectedBubblesType {
-  longevity: number
-  voice: number
-  data: number
-  fourg: number
-  bioscope: number
-  sms: number
-  mca: boolean
+  longevity: number;
+  voice: number;
+  data: number;
+  fourg: number;
+  bioscope: number;
+  sms: number;
+  mca: boolean;
 }
 
 interface EligibilityMapType {
   [key: string]: {
-    data: number[]
-    fourg: number[]
-    bioscope: number[]
-    voice: number[]
-    sms: number[]
-  }
+    data: number[];
+    fourg: number[];
+    bioscope: number[];
+    voice: number[];
+    sms: number[];
+  };
 }
 
 export default function Flexiplan() {
-  const [bubbleMap] = useState<BubbleMapType>(bubbleMapData)
-  const [selected, setSelected] = useState<SelectedBubblesType>(selectedBubblesData)
-  const [eligibilityMap] = useState<EligibilityMapType>(eligibilityMapData)
+  const [bubbleMap] = useState<BubbleMapType>(bubbleMapData as BubbleMapType);
+  const [selected, setSelected] = useState<SelectedBubblesType>({
+    ...selectedBubblesData,
+    mca: selectedBubblesData.mca !== 0,
+  } as SelectedBubblesType);
+  const [eligibilityMap] = useState<EligibilityMapType>(eligibilityMapData as EligibilityMapType);
 
-  // Function to format values based on type
-  const formatValue = (value: number, type: string) => {
+  const formatValue = (value: number | boolean, type: string) => {
+    if (type === "mca") return value ? "On" : "Off";
     if (["data", "fourg", "bioscope"].includes(type)) {
-      if (value >= 1024) {
-        return `${value / 1024} GB`
-      }
-      return `${value} MB`
+      return value >= 1024 ? `${value / 1024} GB` : `${value} MB`;
     }
-    if (type === "voice") return `${value} Min`
-    if (type === "sms") return `${value} SMS`
-    if (type === "longevity") return `${value} ${value === 1 ? "Day" : "Days"}`
-    return value
-  }
+    if (type === "voice") return `${value} Min`;
+    if (type === "sms") return `${value} SMS`;
+    if (type === "longevity") return `${value} ${value === 1 ? "Day" : "Days"}`;
+    return value;
+  };
 
-  // Get eligible options based on the current selection and longevity
   const getEligibleOptions = (type: string) => {
-    const validityKey = `day_${selected.longevity}`
-    return eligibilityMap[validityKey]?.[type as keyof typeof eligibilityMap[typeof validityKey]] || []
-  }
+    const validityKey = `day_${selected.longevity}`;
+    return (
+      eligibilityMap[validityKey]?.[type as keyof typeof eligibilityMap[typeof validityKey]] || []
+    );
+  };
 
-  // Update selections when longevity changes
   const updateSelectionsOnLongevityChange = (newLongevity: number) => {
-    const validityKey = `day_${newLongevity}`
-    const newEligibilityMap = eligibilityMap[validityKey] || {}
+    const validityKey = `day_${newLongevity}`;
+    const newEligibilityMap = eligibilityMap[validityKey] || {};
 
     setSelected((prev) => {
-      const updatedSelections = { ...prev, longevity: newLongevity }
+      const updatedSelections = { ...prev, longevity: newLongevity };
 
-      // Validate each selection against new eligible options
       for (const type in updatedSelections) {
-        if (type !== "longevity" && newEligibilityMap[type as keyof typeof newEligibilityMap]) {
-          const eligibleOptions = newEligibilityMap[type as keyof typeof newEligibilityMap]
-          if (!eligibleOptions.includes(updatedSelections[type as keyof SelectedBubblesType])) {
-            updatedSelections[type as keyof SelectedBubblesType] = eligibleOptions[0] || 0
+        if (type !== "longevity" && type !== "mca" && newEligibilityMap[type as keyof typeof newEligibilityMap]) {
+          const eligibleOptions = newEligibilityMap[type as keyof typeof newEligibilityMap];
+          if (!eligibleOptions.includes(updatedSelections[type as keyof SelectedBubblesType] as number)) {
+            updatedSelections[type as keyof SelectedBubblesType] = eligibleOptions[0] || 0;
           }
         }
       }
 
-      return updatedSelections
-    })
-  }
+      return updatedSelections;
+    });
+  };
 
-  // Handle selecting an option (e.g., for data, voice, etc.)
-  const handleSelect = (type: keyof SelectedBubblesType, value: number) => {
+  const handleSelect = (type: keyof SelectedBubblesType, value: number | boolean) => {
     if (type === "longevity") {
-      updateSelectionsOnLongevityChange(value)
+      updateSelectionsOnLongevityChange(value as number);
     } else {
-      setSelected((prev) => ({ ...prev, [type]: value }))
+      setSelected((prev) => ({ ...prev, [type]: value }));
     }
-  }
+  };
 
-  // Render bubbles for different options (data, voice, etc.)
   const renderBubbles = (type: keyof SelectedBubblesType, title: string, subtitle?: string) => {
-    const values = type === "longevity" ? bubbleMap[type] : getEligibleOptions(type)
+    if (type === "mca") {
+      return (
+        <div className="flex items-center justify-between py-4 border-b">
+          <h3 className="text-lg font-semibold text-black">{title}</h3>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.mca}
+              onChange={() => handleSelect("mca", !selected.mca)}
+              className="sr-only peer"
+            />
+            <div className="w-14 h-8 bg-gray-200 rounded-full peer-checked:bg-green-600 peer-checked:after:translate-x-6 peer-checked:after:bg-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-gray-400 after:border-gray-300 after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
+            <span className="ml-3 text-sm font-medium text-black">
+              {selected.mca ? "On" : "Off"}
+            </span>
+          </label>
+        </div>
+      );
+    }
+
+    const values = type === "longevity" ? bubbleMap[type] : getEligibleOptions(type);
 
     return (
       <div className="space-y-4">
@@ -107,23 +125,19 @@ export default function Flexiplan() {
             <button
               key={value}
               onClick={() => handleSelect(type, value)}
-              className={`h-12 w-12 rounded-full flex items-center justify-center text-sm transition-colors ${selected[type] === value
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-black hover:border-green-600 border border-gray-300"
-                }`}
+              className={`h-12 w-12 rounded-full flex items-center justify-center text-sm transition-colors ${
+                selected[type] === value
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-100 text-black hover:border-green-600 border border-gray-300"
+              }`}
             >
-              {value === 0 ? "0" : value >= 1024 ? `${value / 1024}` : value}
+              {value >= 1024 ? `${value / 1024}` : value}
             </button>
           ))}
         </div>
       </div>
-    )
-  }
-
-  // Handle the toggle for Missed Call Alert
-  const handleToggleMCA = () => {
-    setSelected((prev) => ({ ...prev, mca: !prev.mca }))
-  }
+    );
+  };
 
   return (
     <div className="bg-white">
@@ -140,25 +154,11 @@ export default function Flexiplan() {
             <div className="grid gap-8">
               {renderBubbles("longevity", "Validity")}
               {renderBubbles("data", "Internet", "Regular")}
-              {renderBubbles("fourg", "4G Internet", "4G enabled handset + SIM required")} {/* Corrected label */}
+              {renderBubbles("fourg", "4G Internet", "4G enabled handset + SIM required")}
               {renderBubbles("voice", "Minutes", "Any Local Number")}
               {renderBubbles("bioscope", "Bioscope", "Only used to watch Bioscope")}
               {renderBubbles("sms", "SMS")}
-            </div>
-
-            {/* Missed Call Alert Toggle */}
-            <div className="mt-8 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-semibold text-black">Missed Call Alert</span>
-                <button
-                  onClick={handleToggleMCA}
-                  className={`w-12 h-6 rounded-full flex items-center ${selected.mca ? "bg-green-600" : "bg-gray-300"}`}
-                >
-                  <div
-                    className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${selected.mca ? "translate-x-6" : "translate-x-0"}`}
-                  ></div>
-                </button>
-              </div>
+              {renderBubbles("mca", "Missed Call Alert")}
             </div>
           </div>
 
@@ -167,22 +167,23 @@ export default function Flexiplan() {
             <h3 className="font-semibold text-lg mb-4 text-black">Your Selection:</h3>
             <ul className="space-y-4">
               {Object.keys(selected).map((key) => (
-                key !== 'mca' && (
-                  <li key={key} className="flex justify-between text-black border-b pb-2">
-                    <span className="capitalize">{key}:</span>
-                    <span className="text-green-600">{formatValue(selected[key as keyof SelectedBubblesType], key)}</span>
-                  </li>
-                )
+                <li key={key} className="flex justify-between text-black border-b pb-2">
+                  <span className="capitalize">
+                    {key === "mca"
+                      ? "Missed Call Alert"
+                      : key === "fourg"
+                      ? "4G Internet"
+                      : key}:
+                  </span>
+                  <span className="text-green-600">
+                    {formatValue(selected[key as keyof SelectedBubblesType], key)}
+                  </span>
+                </li>
               ))}
-              {/* Missed Call Alert display */}
-              <li className="flex justify-between text-black border-b pb-2">
-                <span>Missed Call Alert:</span>
-                <span className="text-green-600">{selected.mca ? "On" : "Off"}</span>
-              </li>
             </ul>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
