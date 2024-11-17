@@ -1,6 +1,8 @@
 # Flexiplan
 
-Flexiplan is a responsive React-based application that allows users to customize their mobile plans dynamically. Users can select different options such as validity, internet, voice, and SMS, and toggle additional features like missed call alerts. The selected options are displayed in a summary section for easy review.
+Flexiplan is a responsive **Next.js** TypeScript-based application that allows users to customize their mobile plans dynamically. Users can select different options such as validity, internet, voice, and SMS, and toggle additional features like missed call alerts. The selected options are displayed in a summary section for easy review.
+
+---
 
 ## Features
 
@@ -14,7 +16,8 @@ Flexiplan is a responsive React-based application that allows users to customize
 
 ## Tech Stack
 
-- **React**: The core JavaScript library for building the user interface.
+- **Next.js**: A React framework for server-side rendering and static site generation.
+- **TypeScript**: For static typing and better developer experience.
 - **Tailwind CSS**: For modern, utility-first styling.
 - **JSON Data**: Used for managing mock data for bubbles and eligibility mapping.
 
@@ -22,7 +25,20 @@ Flexiplan is a responsive React-based application that allows users to customize
 
 ## Installation and Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/flexiplan.git
-   cd flexiplan
+```bash
+# Clone the repository
+git clone https://github.com/zaba-mubassarah/flexi-plan.git
+cd flexi-plan
+
+# Install dependencies
+npm install
+# Or with Yarn
+yarn install
+
+# Run the development server
+npm run dev
+# Or with Yarn
+yarn dev
+
+# Open your browser and navigate to
+http://localhost:3000
