@@ -60,14 +60,13 @@ export default function Flexiplan() {
   const getEligibleOptions = (type: keyof BubbleMapType): number[] => {
     const validityKey = `day_${selected.longevity}`;
     const eligibilityForKey = eligibilityMap[validityKey];
-  
+
     if (eligibilityForKey && type in eligibilityForKey) {
       return eligibilityForKey[type as keyof typeof eligibilityForKey] || [];
     }
-  
+
     return [];
   };
-  
 
   const updateSelectionsOnLongevityChange = (newLongevity: number) => {
     const validityKey = `day_${newLongevity}`;
@@ -83,11 +82,7 @@ export default function Flexiplan() {
           newEligibilityMap[type as keyof typeof newEligibilityMap]
         ) {
           const eligibleOptions = newEligibilityMap[type as keyof typeof newEligibilityMap] || [];
-          if (
-            !eligibleOptions.includes(
-              updatedSelections[type] as number
-            )
-          ) {
+          if (!eligibleOptions.includes(updatedSelections[type] as number)) {
             updatedSelections[type] = eligibleOptions[0] || 0;
           }
         }
@@ -108,32 +103,36 @@ export default function Flexiplan() {
   const renderBubbles = (type: keyof SelectedBubblesType, title: string, subtitle?: string) => {
     if (type === "mca") {
       return (
-        <div className="flex items-center justify-between py-4 border-b">
-          <h3 className="text-lg font-semibold text-black">{title}</h3>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={selected.mca}
-              onChange={() => handleSelect("mca", !selected.mca)}
-              className="sr-only peer"
-            />
-            <div className="w-14 h-8 bg-gray-200 rounded-full peer-checked:bg-green-600 peer-checked:after:translate-x-6 peer-checked:after:bg-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-gray-400 after:border-gray-300 after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
-            <span className="ml-3 text-sm font-medium text-black">
-              {selected.mca ? "On" : "Off"}
-            </span>
-          </label>
+        <div className="py-4 border-b">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg text-gray-900">{title}</h3>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selected.mca}
+                onChange={() => handleSelect("mca", !selected.mca)}
+                className="sr-only peer"
+              />
+              <div className="w-14 h-8 bg-gray-200 rounded-full peer-checked:bg-green-600 peer-checked:after:translate-x-6 peer-checked:after:bg-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-gray-400 after:border-gray-300 after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
+              <span className="ml-3 text-sm text-gray-900">
+                {selected.mca ? "On" : "Off"}
+              </span>
+            </label>
+          </div>
+          <p className="mt-2 text-sm text-gray-500">Validity: 30 days</p>
         </div>
       );
     }
 
-    const values = type === "longevity" ? bubbleMap[type] : getEligibleOptions(type as keyof BubbleMapType);
+    const values =
+      type === "longevity" ? bubbleMap[type] : getEligibleOptions(type as keyof BubbleMapType);
 
     return (
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-semibold text-black">{title}</h3>
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 py-2 border-b">
+        <div className="w-36 md:w-40">
+          <h3 className="text-lg text-gray-900">{title}</h3>
           {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-          <div className="text-xl font-bold text-green-600 mt-1">
+          <div className="text-lg text-green-600 mt-1">
             {formatValue(selected[type], type)}
           </div>
         </div>
@@ -142,10 +141,10 @@ export default function Flexiplan() {
             <button
               key={value}
               onClick={() => handleSelect(type, value)}
-              className={`h-12 w-12 rounded-full flex items-center justify-center text-sm transition-colors ${
+              className={`h-10 w-10 rounded-full flex items-center justify-center text-sm transition-colors ${
                 selected[type] === value
                   ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-black hover:border-green-600 border border-gray-300"
+                  : "bg-gray-100 text-gray-900 hover:border-green-600 border border-gray-300"
               }`}
             >
               {value >= 1024 ? `${(value / 1024).toFixed(1)}` : value}
@@ -161,14 +160,14 @@ export default function Flexiplan() {
       <div className="min-h-screen flex flex-col justify-between">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8 w-full max-w-6xl mx-auto p-4">
           {/* Left Section */}
-          <div className="bg-white shadow-md rounded-md p-4">
+          <div className="bg-white rounded-md p-4">
             <div className="border-b pb-4 mb-4">
-              <h1 className="text-2xl font-bold text-black">Flexiplan</h1>
+              <h1 className="text-xl text-gray-900">Flexiplan</h1>
               <p className="text-sm text-gray-500">
                 Make your own plan and enjoy great savings! Only for GP Customers
               </p>
             </div>
-            <div className="grid gap-8">
+            <div className="grid gap-4">
               {renderBubbles("longevity", "Validity")}
               {renderBubbles("data", "Internet", "Regular")}
               {renderBubbles("fourg", "4G Internet", "4G enabled handset + SIM required")}
@@ -180,11 +179,11 @@ export default function Flexiplan() {
           </div>
 
           {/* Right Section */}
-          <div className="bg-white shadow-md rounded-md p-4">
-            <h3 className="font-semibold text-lg mb-4 text-black">Your Selection:</h3>
+          <div className="bg-white rounded-md p-4">
+            <h3 className="text-lg mb-4 text-gray-900">Your Selection:</h3>
             <ul className="space-y-4">
               {Object.keys(selected).map((key) => (
-                <li key={key} className="flex justify-between text-black border-b pb-2">
+                <li key={key} className="flex justify-between text-gray-900 border-b pb-2">
                   <span className="capitalize">
                     {key === "mca"
                       ? "Missed Call Alert"
