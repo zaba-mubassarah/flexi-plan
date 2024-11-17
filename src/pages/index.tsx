@@ -38,27 +38,36 @@ export default function Flexiplan() {
   const [bubbleMap] = useState<BubbleMapType>(bubbleMapData as BubbleMapType);
   const [selected, setSelected] = useState<SelectedBubblesType>({
     ...selectedBubblesData,
-    mca: selectedBubblesData.mca !== 0,
+    mca: Boolean(selectedBubblesData.mca), // Ensure boolean type
   } as SelectedBubblesType);
   const [eligibilityMap] = useState<EligibilityMapType>(eligibilityMapData as EligibilityMapType);
 
-  const formatValue = (value: number | boolean, type: string) => {
+  const formatValue = (value: number | boolean, type: string): string => {
     if (type === "mca") return value ? "On" : "Off";
     if (["data", "fourg", "bioscope"].includes(type)) {
-      return value >= 1024 ? `${value / 1024} GB` : `${value} MB`;
+      return typeof value === "number"
+        ? value >= 1024
+          ? `${(value / 1024).toFixed(1)} GB`
+          : `${value} MB`
+        : "";
     }
     if (type === "voice") return `${value} Min`;
     if (type === "sms") return `${value} SMS`;
     if (type === "longevity") return `${value} ${value === 1 ? "Day" : "Days"}`;
-    return value;
+    return String(value);
   };
 
-  const getEligibleOptions = (type: string) => {
+  const getEligibleOptions = (type: keyof BubbleMapType): number[] => {
     const validityKey = `day_${selected.longevity}`;
-    return (
-      eligibilityMap[validityKey]?.[type as keyof typeof eligibilityMap[typeof validityKey]] || []
-    );
+    const eligibilityForKey = eligibilityMap[validityKey];
+  
+    if (eligibilityForKey && type in eligibilityForKey) {
+      return eligibilityForKey[type as keyof typeof eligibilityForKey] || [];
+    }
+  
+    return [];
   };
+  
 
   const updateSelectionsOnLongevityChange = (newLongevity: number) => {
     const validityKey = `day_${newLongevity}`;
@@ -67,14 +76,22 @@ export default function Flexiplan() {
     setSelected((prev) => {
       const updatedSelections = { ...prev, longevity: newLongevity };
 
-      for (const type in updatedSelections) {
-        if (type !== "longevity" && type !== "mca" && newEligibilityMap[type as keyof typeof newEligibilityMap]) {
-          const eligibleOptions = newEligibilityMap[type as keyof typeof newEligibilityMap];
-          if (!eligibleOptions.includes(updatedSelections[type as keyof SelectedBubblesType] as number)) {
-            updatedSelections[type as keyof SelectedBubblesType] = eligibleOptions[0] || 0;
+      (Object.keys(updatedSelections) as Array<keyof SelectedBubblesType>).forEach((type) => {
+        if (
+          type !== "longevity" &&
+          type !== "mca" &&
+          newEligibilityMap[type as keyof typeof newEligibilityMap]
+        ) {
+          const eligibleOptions = newEligibilityMap[type as keyof typeof newEligibilityMap] || [];
+          if (
+            !eligibleOptions.includes(
+              updatedSelections[type] as number
+            )
+          ) {
+            updatedSelections[type] = eligibleOptions[0] || 0;
           }
         }
-      }
+      });
 
       return updatedSelections;
     });
@@ -109,7 +126,7 @@ export default function Flexiplan() {
       );
     }
 
-    const values = type === "longevity" ? bubbleMap[type] : getEligibleOptions(type);
+    const values = type === "longevity" ? bubbleMap[type] : getEligibleOptions(type as keyof BubbleMapType);
 
     return (
       <div className="space-y-4">
@@ -131,7 +148,7 @@ export default function Flexiplan() {
                   : "bg-gray-100 text-black hover:border-green-600 border border-gray-300"
               }`}
             >
-              {value >= 1024 ? `${value / 1024}` : value}
+              {value >= 1024 ? `${(value / 1024).toFixed(1)}` : value}
             </button>
           ))}
         </div>
