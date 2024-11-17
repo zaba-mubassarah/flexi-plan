@@ -1,9 +1,44 @@
 "use client"
+import { useState } from "react"
+import bubbleMapData from '../data/bubble-map.json'
+import eligibilityMapData from '../data/eligibility-map.json'
+import selectedBubblesData from '../data/selected-bubbles.json'
+
+interface BubbleMapType {
+  voice: number[]
+  sms: number[]
+  bioscope: number[]
+  fourg: number[]
+  longevity: number[]
+  data: number[]
+}
+
+interface SelectedBubblesType {
+  longevity: number
+  voice: number
+  data: number
+  fourg: number
+  bioscope: number
+  sms: number
+  mca: boolean
+}
+
+interface EligibilityMapType {
+  [key: string]: {
+    data: number[]
+    fourg: number[]
+    bioscope: number[]
+    voice: number[]
+    sms: number[]
+  }
+}
+
 export default function Flexiplan() {
   const [bubbleMap] = useState<BubbleMapType>(bubbleMapData)
   const [selected, setSelected] = useState<SelectedBubblesType>(selectedBubblesData)
   const [eligibilityMap] = useState<EligibilityMapType>(eligibilityMapData)
 
+  // Function to format values based on type
   const formatValue = (value: number, type: string) => {
     if (["data", "fourg", "bioscope"].includes(type)) {
       if (value >= 1024) {
@@ -17,11 +52,13 @@ export default function Flexiplan() {
     return value
   }
 
+  // Get eligible options based on the current selection and longevity
   const getEligibleOptions = (type: string) => {
     const validityKey = `day_${selected.longevity}`
     return eligibilityMap[validityKey]?.[type as keyof typeof eligibilityMap[typeof validityKey]] || []
   }
 
+  // Update selections when longevity changes
   const updateSelectionsOnLongevityChange = (newLongevity: number) => {
     const validityKey = `day_${newLongevity}`
     const newEligibilityMap = eligibilityMap[validityKey] || {}
@@ -43,6 +80,7 @@ export default function Flexiplan() {
     })
   }
 
+  // Handle selecting an option (e.g., for data, voice, etc.)
   const handleSelect = (type: keyof SelectedBubblesType, value: number) => {
     if (type === "longevity") {
       updateSelectionsOnLongevityChange(value)
@@ -51,6 +89,7 @@ export default function Flexiplan() {
     }
   }
 
+  // Render bubbles for different options (data, voice, etc.)
   const renderBubbles = (type: keyof SelectedBubblesType, title: string, subtitle?: string) => {
     const values = type === "longevity" ? bubbleMap[type] : getEligibleOptions(type)
 
@@ -81,6 +120,11 @@ export default function Flexiplan() {
     )
   }
 
+  // Handle the toggle for Missed Call Alert
+  const handleToggleMCA = () => {
+    setSelected((prev) => ({ ...prev, mca: !prev.mca }))
+  }
+
   return (
     <div className="bg-white">
       <div className="min-h-screen flex flex-col justify-between">
@@ -96,10 +140,25 @@ export default function Flexiplan() {
             <div className="grid gap-8">
               {renderBubbles("longevity", "Validity")}
               {renderBubbles("data", "Internet", "Regular")}
-              {renderBubbles("fourg", "4G Internet", "4G enabled handset + SIM required")}
+              {renderBubbles("fourg", "4G Internet", "4G enabled handset + SIM required")} {/* Corrected label */}
               {renderBubbles("voice", "Minutes", "Any Local Number")}
               {renderBubbles("bioscope", "Bioscope", "Only used to watch Bioscope")}
               {renderBubbles("sms", "SMS")}
+            </div>
+
+            {/* Missed Call Alert Toggle */}
+            <div className="mt-8 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-black">Missed Call Alert</span>
+                <button
+                  onClick={handleToggleMCA}
+                  className={`w-12 h-6 rounded-full flex items-center ${selected.mca ? "bg-green-600" : "bg-gray-300"}`}
+                >
+                  <div
+                    className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${selected.mca ? "translate-x-6" : "translate-x-0"}`}
+                  ></div>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -108,11 +167,18 @@ export default function Flexiplan() {
             <h3 className="font-semibold text-lg mb-4 text-black">Your Selection:</h3>
             <ul className="space-y-4">
               {Object.keys(selected).map((key) => (
-                <li key={key} className="flex justify-between text-black border-b pb-2">
-                  <span className="capitalize">{key}:</span>
-                  <span className="text-green-600">{formatValue(selected[key as keyof SelectedBubblesType], key)}</span>
-                </li>
+                key !== 'mca' && (
+                  <li key={key} className="flex justify-between text-black border-b pb-2">
+                    <span className="capitalize">{key}:</span>
+                    <span className="text-green-600">{formatValue(selected[key as keyof SelectedBubblesType], key)}</span>
+                  </li>
+                )
               ))}
+              {/* Missed Call Alert display */}
+              <li className="flex justify-between text-black border-b pb-2">
+                <span>Missed Call Alert:</span>
+                <span className="text-green-600">{selected.mca ? "On" : "Off"}</span>
+              </li>
             </ul>
           </div>
         </div>
